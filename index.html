@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MindAR Image Tracking</title>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.0/dist/mindar-image-three.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mindar-image-three@1.1.0/dist/mindar-image-three.prod.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
       body {
@@ -20,7 +20,7 @@
     <div id="container"></div>
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
-        const mindarThree = new MindAR.Three.MindARThree({
+        const mindarThree = new mindarImageThree.MindARThree({
           container: document.querySelector("#container"),
           imageTargetSrc: "./marker.mind", // 你的 marker 設定檔
           uiScanning: "yes",

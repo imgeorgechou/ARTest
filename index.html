@@ -3,7 +3,6 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>圖片追蹤 AR</title>
-    <!-- 更新為正確的 CDN 連結 -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"></script>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image-aframe.prod.js"></script>
@@ -17,30 +16,84 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 2;
+        width: 100px;
+      }
+      .screen-reader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100vh;
+        background: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 3;
       }
     </style>
   </head>
   <body>
-    <div class="example-target">
-      <img src="targets.jpg" alt="掃描這個圖片" style="max-height: 80px" />
+    <!-- 載入提示 -->
+    <div class="screen-reader">
+      <div>載入中，請稍候...</div>
     </div>
+
+    <div class="example-target">
+      <img src="targets.jpg" alt="掃描這個圖片" style="width: 100%" />
+    </div>
+
     <a-scene
-      mindar-image="imageTargetSrc: targets.mind;"
+      mindar-image="imageTargetSrc: targets.mind; uiScanning: true; uiLoading: false;"
+      embedded
       color-space="sRGB"
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      embedded
     >
+      <a-assets>
+        <img id="card" src="ans.png" />
+      </a-assets>
+
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-image
-          src="ans.png"
+        <a-plane
+          src="#card"
           position="0 0 0"
-          height="0.5"
-          width="0.5"
-        ></a-image>
+          height="1"
+          width="1"
+          rotation="0 0 0"
+        ></a-plane>
       </a-entity>
     </a-scene>
+
+    <script>
+      // 處理載入畫面
+      document.addEventListener("DOMContentLoaded", function () {
+        const sceneEl = document.querySelector("a-scene");
+        const screenReader = document.querySelector(".screen-reader");
+
+        // 當場景載入完成時
+        sceneEl.addEventListener("renderstart", () => {
+          screenReader.style.display = "none";
+        });
+
+        // 監聽目標是否被找到
+        const entity = document.querySelector("[mindar-image-target]");
+        entity.addEventListener("targetFound", () => {
+          console.log("目標找到了！");
+        });
+        entity.addEventListener("targetLost", () => {
+          console.log("目標遺失了！");
+        });
+      });
+
+      // 強制設定螢幕方向
+      if (screen.orientation) {
+        screen.orientation.lock("portrait").catch(function (error) {
+          console.log("無法鎖定螢幕方向:", error);
+        });
+      }
+    </script>
   </body>
 </html>

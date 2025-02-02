@@ -1,62 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MindAR Image Tracking</title>
-    <script
-      src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.0/dist/mindar-image-three.prod.js"
-      type="module"
-    ></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>圖片追蹤 AR</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mind-ar/1.2.3/mindar-image.prod.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mind-ar/1.2.3/mindar-image-aframe.prod.js"></script>
     <style>
       body {
         margin: 0;
-        overflow: hidden;
       }
-      canvas {
-        display: block;
+      .example-target {
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2;
       }
     </style>
   </head>
   <body>
-    <div id="container"></div>
-    <script type="module">
-      import { MindARThree } from "https://cdn.jsdelivr.net/npm/mind-ar@1.1.0/dist/mindar-image-three.prod.js";
-
-      document.addEventListener("DOMContentLoaded", async () => {
-        const mindarThree = new MindARThree({
-          container: document.querySelector("#container"),
-          imageTargetSrc: "./marker.mind", // 你的 marker 設定檔
-          uiScanning: "yes",
-          maxTrack: 1, // 允許最多追蹤 1 個目標
-        });
-
-        const { renderer, scene, camera } = mindarThree;
-
-        const anchor = mindarThree.addAnchor(0);
-
-        // 確保 WebAR 會請求開啟相機
-        await mindarThree.start();
-
-        // 加載圖片紋理
-        const textureLoader = new THREE.TextureLoader();
-        const texture = textureLoader.load("./success-image.png"); // 這裡換成你的圖片
-
-        // 建立平面並貼上圖片
-        const geometry = new THREE.PlaneGeometry(1, 1);
-        const material = new THREE.MeshBasicMaterial({
-          map: texture,
-          transparent: true,
-        });
-        const plane = new THREE.Mesh(geometry, material);
-
-        anchor.group.add(plane); // 把圖片加到掃描成功後的畫面中
-
-        renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera);
-        });
-      });
-    </script>
+    <div class="example-target">
+      <img src="targets.jpg" alt="掃描這個圖片" style="max-height: 80px" />
+    </div>
+    <a-scene
+      mindar-image="imageTargetSrc: targets.mind;"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-image
+          src="ans.png"
+          position="0 0 0"
+          height="0.5"
+          width="0.5"
+        ></a-image>
+        <a-plane
+          color="blue"
+          opaciy="0.8"
+          position="0 0 0"
+          height="0.5"
+          width="0.5"
+          rotation="0 0 0"
+        >
+        </a-plane>
+      </a-entity>
+    </a-scene>
   </body>
 </html>

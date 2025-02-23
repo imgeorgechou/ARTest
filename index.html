@@ -73,7 +73,8 @@
                       filterBeta: 10000;
                       missTolerance: 5;
                       warmupTolerance: 5;
-                      showStats: true;"
+                      showStats: true;
+                      autoStart: false;"
         embedded
         color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights"
@@ -149,41 +150,92 @@
     </div>
 
     <script>
-      const sceneEl = document.querySelector("a-scene");
+      window.addEventListener("load", async () => {
+        try {
+          const sceneEl = document.querySelector("a-scene");
 
-      // 監聽目標檢測事件
-      sceneEl.addEventListener("targetFound", (event) => {
-        const targetIndex = event.detail.targetIndex;
-        console.log("目標找到:", targetIndex);
+          // 等待場景載入
+          await new Promise((resolve) => {
+            if (sceneEl.hasLoaded) {
+              resolve();
+            } else {
+              sceneEl.addEventListener("loaded", resolve, { once: true });
+            }
+          });
 
-        // 記錄檢測性能
-        const perfNow = performance.now();
-        console.log(`檢測時間: ${perfNow}ms`);
-      });
+          // 檢查相機權限
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: "environment",
+              },
+            });
 
-      sceneEl.addEventListener("targetLost", (event) => {
-        console.log("目標遺失:", event.detail.targetIndex);
-      });
+            // 釋放相機
+            stream.getTracks().forEach((track) => track.stop());
 
-      // 監聽錯誤
-      sceneEl.addEventListener("arError", (event) => {
-        console.error("AR錯誤:", event.detail);
-      });
+            // 獲取 AR 系統
+            const arSystem = sceneEl.systems["mindar-image-system"];
+            if (!arSystem) {
+              throw new Error("AR 系統未能初始化");
+            }
 
-      // 監聽系統性能
-      let lastTime = performance.now();
-      function checkPerformance() {
-        const now = performance.now();
-        const fps = 1000 / (now - lastTime);
-        lastTime = now;
+            // 監聽目標檢測事件
+            sceneEl.addEventListener("targetFound", (event) => {
+              const targetIndex = event.detail.targetIndex;
+              console.log("目標找到:", targetIndex);
 
-        if (fps < 24) {
-          console.warn("性能警告: FPS低於24");
+              // 記錄檢測性能
+              const perfNow = performance.now();
+              console.log(`檢測時間: ${perfNow}ms`);
+            });
+
+            sceneEl.addEventListener("targetLost", (event) => {
+              console.log("目標遺失:", event.detail.targetIndex);
+            });
+
+            // 監聽錯誤
+            sceneEl.addEventListener("arError", (event) => {
+              console.error("AR錯誤:", event.detail);
+              showError("AR 系統錯誤: " + (event.detail.message || "未知錯誤"));
+            });
+
+            // 監聽系統性能
+            let lastTime = performance.now();
+            function checkPerformance() {
+              const now = performance.now();
+              const fps = 1000 / (now - lastTime);
+              lastTime = now;
+
+              if (fps < 24) {
+                console.warn("性能警告: FPS低於24");
+              }
+
+              requestAnimationFrame(checkPerformance);
+            }
+            checkPerformance();
+
+            // 啟動 AR
+            await arSystem.start();
+            console.log("AR 系統啟動成功");
+          } catch (err) {
+            console.error("相機或 AR 初始化錯誤:", err);
+            showError(err.message || "相機初始化失敗");
+          }
+        } catch (error) {
+          console.error("系統錯誤:", error);
+          showError(error.message || "系統初始化失敗");
         }
+      });
 
-        requestAnimationFrame(checkPerformance);
+      function showError(message) {
+        const errorElement = document.getElementById("error-message");
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+        setTimeout(() => {
+          errorElement.style.display = "none";
+        }, 5000);
       }
-      checkPerformance();
     </script>
   </body>
 </html>

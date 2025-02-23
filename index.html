@@ -7,8 +7,8 @@
     />
     <title>AR 追蹤</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; worker-src * blob:;"
@@ -68,9 +68,12 @@
 
       <a-scene
         mindar-image="imageTargetSrc: ./targets.mind; 
-                      autoStart: false; 
-                      uiScanning: true;
-                      uiLoading: true;"
+                      maxTrack: 1;
+                      filterMinCF: 0.0001;
+                      filterBeta: 10000;
+                      missTolerance: 5;
+                      warmupTolerance: 5;
+                      showStats: true;"
         embedded
         color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights"
@@ -146,53 +149,41 @@
     </div>
 
     <script>
-      window.addEventListener("load", async () => {
-        try {
-          const sceneEl = document.querySelector("a-scene");
+      const sceneEl = document.querySelector("a-scene");
 
-          // 等待場景載入
-          await new Promise((resolve) => {
-            if (sceneEl.hasLoaded) {
-              resolve();
-            } else {
-              sceneEl.addEventListener("loaded", resolve, { once: true });
-            }
-          });
+      // 監聽目標檢測事件
+      sceneEl.addEventListener("targetFound", (event) => {
+        const targetIndex = event.detail.targetIndex;
+        console.log("目標找到:", targetIndex);
 
-          console.log("場景已載入");
-
-          // 獲取 AR 系統
-          const arSystem = sceneEl.systems["mindar-image-system"];
-          if (!arSystem) {
-            throw new Error("AR 系統未能初始化");
-          }
-
-          // 添加事件監聽
-          sceneEl.addEventListener("targetFound", (event) => {
-            console.log(`找到目標 ${event.detail.targetIndex}`);
-          });
-
-          sceneEl.addEventListener("targetLost", (event) => {
-            console.log(`失去目標 ${event.detail.targetIndex}`);
-          });
-
-          // 啟動 AR
-          await arSystem.start();
-          console.log("AR 系統啟動成功");
-        } catch (error) {
-          console.error("系統錯誤:", error);
-          showError(error.message || "系統初始化失敗");
-        }
+        // 記錄檢測性能
+        const perfNow = performance.now();
+        console.log(`檢測時間: ${perfNow}ms`);
       });
 
-      function showError(message) {
-        const errorElement = document.getElementById("error-message");
-        errorElement.textContent = message;
-        errorElement.style.display = "block";
-        setTimeout(() => {
-          errorElement.style.display = "none";
-        }, 5000);
+      sceneEl.addEventListener("targetLost", (event) => {
+        console.log("目標遺失:", event.detail.targetIndex);
+      });
+
+      // 監聽錯誤
+      sceneEl.addEventListener("arError", (event) => {
+        console.error("AR錯誤:", event.detail);
+      });
+
+      // 監聽系統性能
+      let lastTime = performance.now();
+      function checkPerformance() {
+        const now = performance.now();
+        const fps = 1000 / (now - lastTime);
+        lastTime = now;
+
+        if (fps < 24) {
+          console.warn("性能警告: FPS低於24");
+        }
+
+        requestAnimationFrame(checkPerformance);
       }
+      checkPerformance();
     </script>
   </body>
 </html>

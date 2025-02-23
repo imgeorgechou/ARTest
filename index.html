@@ -9,6 +9,7 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js"></script>
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; worker-src * blob:;"
@@ -150,6 +151,11 @@
     </div>
 
     <script>
+      // 添加性能監控
+      const stats = new Stats();
+      stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+      document.body.appendChild(stats.dom);
+
       window.addEventListener("load", async () => {
         try {
           const sceneEl = document.querySelector("a-scene");
@@ -200,20 +206,20 @@
               showError("AR 系統錯誤: " + (event.detail.message || "未知錯誤"));
             });
 
-            // 監聽系統性能
-            let lastTime = performance.now();
-            function checkPerformance() {
-              const now = performance.now();
-              const fps = 1000 / (now - lastTime);
-              lastTime = now;
+            // 修改性能監控代碼
+            function animate() {
+              stats.begin();
 
+              // 檢查 FPS
+              const fps = stats.getFPS();
               if (fps < 24) {
                 console.warn("性能警告: FPS低於24");
               }
 
-              requestAnimationFrame(checkPerformance);
+              stats.end();
+              requestAnimationFrame(animate);
             }
-            checkPerformance();
+            animate();
 
             // 啟動 AR
             await arSystem.start();

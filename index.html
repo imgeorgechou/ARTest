@@ -61,32 +61,38 @@
       .show-error {
         display: block !important;
       }
+      .ar-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+      }
     </style>
   </head>
   <body>
-    <div id="my-ar-container">
-      <div
-        id="error-message"
-        style="
-          display: none;
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: rgba(0, 0, 0, 0.8);
-          color: white;
-          padding: 20px;
-          border-radius: 10px;
-          z-index: 9999;
-        "
-      ></div>
+    <!-- 添加導航 -->
+    <div
+      id="nav-buttons"
+      style="position: fixed; top: 10px; right: 10px; z-index: 1000"
+    >
+      <button
+        onclick="switchGroup(1)"
+        style="background: #fff; padding: 8px; margin: 5px; border-radius: 5px"
+      >
+        組別 1
+      </button>
+      <button
+        onclick="switchGroup(2)"
+        style="background: #fff; padding: 8px; margin: 5px; border-radius: 5px"
+      >
+        組別 2
+      </button>
+    </div>
 
+    <!-- 第一組 AR 場景 -->
+    <div id="ar-group-1" class="ar-container">
       <a-scene
         mind-ar-loader
-        mindar-image="imageTargetSrc: ./targets.mind; 
-                          autoStart: false; 
-                          uiScanning: true;
-                          uiLoading: true;"
+        mindar-image="imageTargetSrc: ./targets-group1.mind;"
         embedded
         color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights"
@@ -98,9 +104,6 @@
           <img id="target-image-2" src="./ans2.png" />
           <img id="target-image-3" src="./ans3.png" />
           <img id="target-image-4" src="./ans4.png" />
-          <img id="target-image-5" src="./ans5.png" />
-          <img id="target-image-6" src="./ans6.png" />
-          <img id="target-image-7" src="./ans7.png" />
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -152,6 +155,27 @@
           >
           </a-plane>
         </a-entity>
+      </a-scene>
+    </div>
+
+    <!-- 第二組 AR 場景 -->
+    <div id="ar-group-2" class="ar-container" style="display: none">
+      <a-scene
+        mind-ar-loader
+        mindar-image="imageTargetSrc: ./targets-group2.mind;"
+        embedded
+        color-space="sRGB"
+        renderer="colorManagement: true, physicallyCorrectLights"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false"
+      >
+        <a-assets>
+          <img id="target-image-5" src="./ans5.png" />
+          <img id="target-image-6" src="./ans6.png" />
+          <img id="target-image-7" src="./ans7.png" />
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
         <!-- 第五個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 4">
@@ -191,7 +215,58 @@
       </a-scene>
     </div>
 
+    <div id="my-ar-container">
+      <div
+        id="error-message"
+        style="
+          display: none;
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 20px;
+          border-radius: 10px;
+          z-index: 9999;
+        "
+      ></div>
+    </div>
+
     <script>
+      let currentGroup = 1;
+      let activeSystem = null;
+
+      async function switchGroup(groupNum) {
+        if (currentGroup === groupNum) return;
+
+        // 停止當前的 AR 系統
+        if (activeSystem) {
+          await activeSystem.stop();
+        }
+
+        // 隱藏當前組別，顯示新組別
+        document.getElementById(`ar-group-${currentGroup}`).style.display =
+          "none";
+        document.getElementById(`ar-group-${groupNum}`).style.display = "block";
+
+        // 初始化新的 AR 系統
+        const newScene = document.querySelector(
+          `#ar-group-${groupNum} a-scene`
+        );
+        activeSystem = newScene.systems["mindar-image-system"];
+        await activeSystem.start();
+
+        currentGroup = groupNum;
+      }
+
+      // 初始化第一組
+      window.addEventListener("load", async () => {
+        const scene1 = document.querySelector("#ar-group-1 a-scene");
+        activeSystem = scene1.systems["mindar-image-system"];
+        await activeSystem.start();
+      });
+
       // 強制直式螢幕
       if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock("portrait").catch((error) => {
@@ -227,6 +302,9 @@
         try {
           const sceneEl = document.querySelector("a-scene");
 
+          // 添加性能監控
+          const startTime = performance.now();
+
           // 等待 MindAR 完全載入
           await new Promise((resolve) => {
             if (window.MINDAR && window.MINDAR.IMAGE) {
@@ -238,68 +316,24 @@
             }
           });
 
-          // 等待所有圖片資源載入
-          const images = document.querySelectorAll("a-assets img");
-          await Promise.all(
-            Array.from(images).map(
-              (img) =>
-                new Promise((resolve) => {
-                  if (img.complete) {
-                    resolve();
-                  } else {
-                    img.onload = resolve;
-                    img.onerror = resolve; // 即使載入失敗也繼續
-                  }
-                })
-            )
-          );
+          console.log("MindAR 載入時間:", performance.now() - startTime, "ms");
 
-          console.log("所有資源已載入");
-
-          // 檢查相機權限
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                facingMode: "environment",
-              },
-            });
-
-            // 釋放相機
-            stream.getTracks().forEach((track) => track.stop());
-
-            // 等待場景載入
-            await new Promise((resolve) => {
-              if (sceneEl.hasLoaded) {
-                resolve();
-              } else {
-                sceneEl.addEventListener("loaded", resolve, { once: true });
-              }
-            });
-
-            // 獲取 AR 系統
-            const arSystem = sceneEl.systems["mindar-image-system"];
-            if (!arSystem) {
-              throw new Error("AR 系統未能初始化");
-            }
-
-            // 添加事件監聽
-            sceneEl.addEventListener("targetFound", (event) => {
-              const targetIndex = event.detail.targetIndex;
-              console.log(`找到目標 ${targetIndex}`);
-            });
-
-            sceneEl.addEventListener("targetLost", (event) => {
-              const targetIndex = event.detail.targetIndex;
-              console.log(`失去目標 ${targetIndex}`);
-            });
-
-            // 啟動 AR
-            await arSystem.start();
-            console.log("AR 系統啟動成功");
-          } catch (err) {
-            console.error("相機或 AR 初始化錯誤:", err);
-            showError(err.message || "相機初始化失敗");
+          // 獲取 AR 系統
+          const arSystem = sceneEl.systems["mindar-image-system"];
+          if (!arSystem) {
+            throw new Error("AR 系統未能初始化");
           }
+
+          // 設置性能相關參數
+          if (arSystem.controller) {
+            arSystem.controller.warmupTolerance = 5;
+            arSystem.controller.missTolerance = 5;
+          }
+
+          // 啟動 AR
+          await arSystem.start();
+          console.log("AR 系統啟動成功");
+          console.log("總初始化時間:", performance.now() - startTime, "ms");
         } catch (error) {
           console.error("系統錯誤:", error);
           showError(error.message || "系統初始化失敗");

@@ -19,6 +19,10 @@
             const aframeScript = document.createElement("script");
             aframeScript.src =
               "https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image-aframe.prod.js";
+            aframeScript.onload = () => {
+              // 腳本載入完成後觸發事件
+              this.el.emit("mindar-loaded");
+            };
             document.head.appendChild(aframeScript);
           };
           document.head.appendChild(mindARScript);
@@ -225,25 +229,30 @@
 
           // 等待 MindAR 完全載入
           await new Promise((resolve) => {
-            const checkMindAR = () => {
-              if (window.MINDAR && window.MINDAR.IMAGE) {
-                resolve();
-              } else {
-                setTimeout(checkMindAR, 100);
-              }
-            };
-            checkMindAR();
+            if (window.MINDAR && window.MINDAR.IMAGE) {
+              resolve();
+            } else {
+              sceneEl.addEventListener("mindar-loaded", resolve, {
+                once: true,
+              });
+            }
           });
+
+          console.log("MindAR 已載入");
+
+          // 等待場景載入
+          await new Promise((resolve) => {
+            if (sceneEl.hasLoaded) {
+              resolve();
+            } else {
+              sceneEl.addEventListener("loaded", resolve, { once: true });
+            }
+          });
+
+          console.log("場景已載入");
 
           // 檢查相機權限
           try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const cameras = devices.filter(
-              (device) => device.kind === "videoinput"
-            );
-            console.log("可用相機:", cameras.length);
-
-            // 使用更基本的相機設置
             const stream = await navigator.mediaDevices.getUserMedia({
               video: {
                 facingMode: "environment",
@@ -253,33 +262,35 @@
             // 釋放相機
             stream.getTracks().forEach((track) => track.stop());
 
-            // 等待場景載入
-            await new Promise((resolve) => {
-              if (sceneEl.hasLoaded) {
-                resolve();
-              } else {
-                sceneEl.addEventListener("loaded", resolve, { once: true });
-              }
-            });
-
-            console.log("場景已載入");
-
             // 獲取並啟動 AR 系統
             const arSystem = sceneEl.systems["mindar-image-system"];
             if (!arSystem) {
               throw new Error("AR 系統未能初始化");
             }
 
+            // 添加事件監聽
+            sceneEl.addEventListener("arReady", () => {
+              console.log("AR 系統準備就緒");
+            });
+
+            sceneEl.addEventListener("arError", (error) => {
+              console.error("AR 錯誤:", error);
+              showError("AR 系統錯誤");
+            });
+
+            // 等待一小段時間確保 UI 初始化完成
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
             // 啟動 AR
             await arSystem.start();
             console.log("AR 系統啟動成功");
           } catch (err) {
             console.error("相機或 AR 初始化錯誤:", err);
-            showError("相機初始化失敗: " + err.message);
+            showError(err.message || "相機初始化失敗");
           }
         } catch (error) {
           console.error("系統錯誤:", error);
-          showError(error.message);
+          showError(error.message || "系統初始化失敗");
         }
       });
     </script>

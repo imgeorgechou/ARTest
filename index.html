@@ -213,13 +213,24 @@
             );
             console.log("可用相機:", cameras.length);
 
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                facingMode: "environment", // 改用較寬鬆的設置
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-              },
-            });
+            // 修改相機設置，使用更靈活的配置
+            let stream;
+            try {
+              // 首先嘗試使用後置相機
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                  facingMode: { ideal: "environment" },
+                  width: { ideal: 1280 },
+                  height: { ideal: 720 },
+                },
+              });
+            } catch (e) {
+              console.log("無法使用後置相機，嘗試其他相機設置");
+              // 如果失敗，使用更基本的設置
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+              });
+            }
 
             // 釋放相機
             stream.getTracks().forEach((track) => track.stop());
@@ -252,6 +263,12 @@
               console.log(`失去目標 ${targetIndex}`);
             });
 
+            // 添加 AR 錯誤監聽
+            sceneEl.addEventListener("arError", (event) => {
+              console.error("AR 錯誤:", event.detail);
+              showError("AR 系統錯誤: " + (event.detail.message || "未知錯誤"));
+            });
+
             // 啟動 AR
             await arSystem.start();
             console.log("AR 系統啟動成功");
@@ -261,6 +278,8 @@
               showError("請允許使用相機權限");
             } else if (err.name === "NotFoundError") {
               showError("找不到相機設備");
+            } else if (err.name === "OverconstrainedError") {
+              showError("相機設置不支援，請重新整理頁面");
             } else {
               showError("初始化失敗: " + err.message);
             }

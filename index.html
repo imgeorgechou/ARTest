@@ -85,14 +85,46 @@
         mind-ar-loader
         mindar-image="imageTargetSrc: ./targets.mind; 
                           autoStart: false; 
-                          uiScanning: true; 
-                          uiLoading: true;"
+                          uiScanning: #scanning-overlay;
+                          uiLoading: #loading-overlay;"
         embedded
         color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
       >
+        <!-- 添加自定義 UI 元素 -->
+        <div id="scanning-overlay" style="display: none">
+          <div
+            style="
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              z-index: 1000;
+              color: white;
+              text-align: center;
+            "
+          >
+            請掃描目標圖片
+          </div>
+        </div>
+        <div id="loading-overlay" style="display: none">
+          <div
+            style="
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              z-index: 1000;
+              color: white;
+              text-align: center;
+            "
+          >
+            載入中...
+          </div>
+        </div>
+
         <a-assets>
           <img id="target-image-1" src="./ans1.png" />
           <img id="target-image-2" src="./ans2.png" />
@@ -271,6 +303,7 @@
             // 添加事件監聽
             sceneEl.addEventListener("arReady", () => {
               console.log("AR 系統準備就緒");
+              document.querySelector("#loading-overlay").style.display = "none";
             });
 
             sceneEl.addEventListener("arError", (error) => {
@@ -278,12 +311,15 @@
               showError("AR 系統錯誤");
             });
 
-            // 等待一小段時間確保 UI 初始化完成
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            // 顯示載入畫面
+            document.querySelector("#loading-overlay").style.display = "block";
 
             // 啟動 AR
             await arSystem.start();
             console.log("AR 系統啟動成功");
+
+            // 顯示掃描提示
+            document.querySelector("#scanning-overlay").style.display = "block";
           } catch (err) {
             console.error("相機或 AR 初始化錯誤:", err);
             showError(err.message || "相機初始化失敗");

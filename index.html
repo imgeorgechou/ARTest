@@ -38,6 +38,7 @@
           <img id="target-image-1" src="ans1.png" />
           <img id="target-image-2" src="ans2.png" />
           <img id="target-image-3" src="ans3.png" />
+          <img id="target-image-4" src="ans4.png" />
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -70,6 +71,17 @@
         <a-entity mindar-image-target="targetIndex: 2">
           <a-plane
             src="#target-image-3"
+            position="0 0 0"
+            height="1"
+            width="1"
+            rotation="0 0 0"
+          >
+          </a-plane>
+        </a-entity>
+        <!-- 第四個辨識目標 -->
+        <a-entity mindar-image-target="targetIndex: 3">
+          <a-plane
+            src="#target-image-4"
             position="0 0 0"
             height="1"
             width="1"

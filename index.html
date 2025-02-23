@@ -125,7 +125,76 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         const sceneEl = document.querySelector("a-scene");
-        const arSystem = sceneEl.systems["mindar-image-system"];
+
+        // 等待場景載入完成後再初始化
+        sceneEl.addEventListener("loaded", () => {
+          console.log("場景載入完成");
+          const arSystem = sceneEl.systems["mindar-image-system"];
+
+          if (!arSystem) {
+            console.error("AR 系統未能正確初始化");
+            showError("AR 系統初始化失敗，請重新載入頁面");
+            return;
+          }
+
+          // 初始化檢查
+          initializeAR();
+        });
+
+        // 將初始化邏輯移到單獨的函數中
+        async function initializeAR() {
+          try {
+            // 先檢查相機權限
+            const hasCamera = await checkCameraPermission();
+            if (!hasCamera) {
+              showError("請允許使用相機權限並重新整理頁面");
+              return;
+            }
+
+            // 再檢查資源
+            await checkResources();
+          } catch (error) {
+            console.error("初始化失敗:", error);
+            showError("初始化失敗: " + error.message);
+          }
+        }
+
+        // 修改相機權限檢查
+        const checkCameraPermission = async () => {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: { ideal: "environment" }, // 優先使用後置相機
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+              },
+            });
+
+            // 測試相機是否正常工作
+            const tracks = stream.getVideoTracks();
+            if (tracks.length === 0) {
+              throw new Error("找不到相機");
+            }
+
+            // 記錄相機資訊
+            console.log("使用的相機:", tracks[0].label);
+
+            // 釋放相機
+            stream.getTracks().forEach((track) => track.stop());
+
+            return true;
+          } catch (err) {
+            console.error("相機權限錯誤:", err);
+            if (err.name === "NotAllowedError") {
+              showError("請允許使用相機權限");
+            } else if (err.name === "NotFoundError") {
+              showError("找不到相機設備");
+            } else {
+              showError("相機初始化失敗：" + err.message);
+            }
+            return false;
+          }
+        };
 
         // 檢查瀏覽器相容性
         console.log("UserAgent:", navigator.userAgent);
@@ -197,49 +266,6 @@
           }
         };
 
-        // 修改相機權限檢查
-        const checkCameraPermission = async () => {
-          try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const cameras = devices.filter(
-              (device) => device.kind === "videoinput"
-            );
-            console.log("可用相機數量:", cameras.length, "相機列表:", cameras);
-
-            // 嘗試先獲取相機權限
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                facingMode: "environment",
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-              },
-              audio: false,
-            });
-
-            // 測試相機流
-            console.log("相機流獲取成功:", stream.getVideoTracks());
-
-            // 釋放相機流，讓 AR 系統可以重新使用
-            stream.getTracks().forEach((track) => track.stop());
-
-            return true;
-          } catch (err) {
-            console.error("相機權限檢查詳細錯誤:", {
-              name: err.name,
-              message: err.message,
-              stack: err.stack,
-            });
-            showError("相機權限錯誤：" + err.message);
-            throw err;
-          }
-        };
-
-        // 初始化檢查
-        (async () => {
-          await checkCameraPermission();
-          await checkResources();
-        })();
-
         // 監聽目標檢測事件
         sceneEl.addEventListener("targetFound", (event) => {
           console.log("目標找到了！索引:", event.detail.targetIndex);
@@ -254,22 +280,23 @@
           console.log("AR 系統準備就緒");
         });
 
-        // 監聽錯誤事件 - 修改為更詳細的錯誤處理
+        // 修改錯誤處理
         sceneEl.addEventListener("arError", (event) => {
           const errorDetail = {
             error: event.detail.error,
             message: event.detail.message,
             stack: event.detail.stack,
           };
-          console.error("AR 系統發生錯誤:", errorDetail);
+          console.error("AR 錯誤:", errorDetail);
 
+          // 根據錯誤類型顯示不同訊息
           const errorMsg = event.detail.message || "";
           if (errorMsg.includes("getUserMedia")) {
-            showError("無法存取相機，請確認相機權限已開啟");
+            showError("無法存取相機，請確認相機權限並重新整理頁面");
           } else if (errorMsg.includes("targets.mind")) {
-            showError("無法載入辨識目標檔案，請確認網路連接");
+            showError("無法載入辨識目標，請確認網路連接");
           } else {
-            showError("AR 系統發生錯誤：" + errorMsg);
+            showError("AR 系統錯誤：" + errorMsg);
           }
         });
 

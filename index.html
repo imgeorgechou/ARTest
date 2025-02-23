@@ -24,10 +24,43 @@
         width: 100%;
         height: 100%;
       }
+      #error-message {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 9999;
+        text-align: center;
+        max-width: 80%;
+      }
+      .show-error {
+        display: block !important;
+      }
     </style>
   </head>
   <body>
     <div id="my-ar-container">
+      <div
+        id="error-message"
+        style="
+          display: none;
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 20px;
+          border-radius: 10px;
+          z-index: 9999;
+        "
+      ></div>
+
       <a-scene
         mindar-image="imageTargetSrc: targets.mind; 
                           autoStart: true; 
@@ -149,6 +182,21 @@
         });
       });
 
+      // 添加錯誤顯示函數
+      function showError(message) {
+        const errorElement = document.getElementById("error-message");
+        errorElement.textContent = message;
+        errorElement.classList.add("show-error");
+
+        // 同時在控制台輸出
+        console.error(message);
+
+        // 5秒後自動隱藏
+        setTimeout(() => {
+          errorElement.classList.remove("show-error");
+        }, 5000);
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         const sceneEl = document.querySelector("a-scene");
         const arSystem = sceneEl.systems["mindar-image-system"];
@@ -172,13 +220,18 @@
             const mindARPath = document
               .querySelector("a-scene")
               .getAttribute("mindar-image").imageTargetSrc;
+
+            console.log("正在檢查 targets.mind:", mindARPath);
             const response = await fetch(mindARPath);
+
             if (!response.ok) {
               throw new Error(
-                `無法載入 targets.mind (狀態: ${response.status})`
+                `targets.mind 載入失敗: ${response.status} ${response.statusText}`
               );
             }
-            console.log("targets.mind 載入成功");
+
+            const buffer = await response.arrayBuffer();
+            console.log("targets.mind 大小:", buffer.byteLength, "bytes");
 
             const images = document.querySelectorAll("img");
             const imagePromises = Array.from(images).map((img) => {
@@ -196,8 +249,13 @@
             await Promise.all(imagePromises);
             console.log("所有圖片載入成功");
           } catch (err) {
-            console.error("資源載入錯誤:", err);
-            alert("資源載入失敗，請重新整理頁面");
+            console.error("資源檢查詳細錯誤:", {
+              name: err.name,
+              message: err.message,
+              stack: err.stack,
+            });
+            showError("資源載入失敗：" + err.message);
+            throw err;
           }
         };
 
@@ -208,25 +266,33 @@
             const cameras = devices.filter(
               (device) => device.kind === "videoinput"
             );
-            console.log("可用相機數量:", cameras.length);
+            console.log("可用相機數量:", cameras.length, "相機列表:", cameras);
 
-            const result = await navigator.mediaDevices.getUserMedia({
+            // 嘗試先獲取相機權限
+            const stream = await navigator.mediaDevices.getUserMedia({
               video: {
-                facingMode: "environment", // 強制使用後置相機
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
               },
+              audio: false,
             });
-            console.log("相機權限已獲得");
+
+            // 測試相機流
+            console.log("相機流獲取成功:", stream.getVideoTracks());
+
+            // 釋放相機流，讓 AR 系統可以重新使用
+            stream.getTracks().forEach((track) => track.stop());
+
             return true;
           } catch (err) {
-            console.error("相機權限錯誤:", err);
-            if (err.name === "NotAllowedError") {
-              alert("請允許使用相機權限！可能需要重新整理頁面。");
-            } else if (err.name === "NotFoundError") {
-              alert("找不到相機設備，請確認相機可用。");
-            } else {
-              alert("相機初始化失敗：" + err.message);
-            }
-            return false;
+            console.error("相機權限檢查詳細錯誤:", {
+              name: err.name,
+              message: err.message,
+              stack: err.stack,
+            });
+            showError("相機權限錯誤：" + err.message);
+            throw err;
           }
         };
 
@@ -250,10 +316,23 @@
           console.log("AR 系統準備就緒");
         });
 
-        // 監聽錯誤事件
+        // 監聽錯誤事件 - 修改為更詳細的錯誤處理
         sceneEl.addEventListener("arError", (event) => {
-          console.error("AR 系統發生錯誤:", event);
-          alert("AR 系統發生錯誤，請重新載入頁面");
+          const errorDetail = {
+            error: event.detail.error,
+            message: event.detail.message,
+            stack: event.detail.stack,
+          };
+          console.error("AR 系統發生錯誤:", errorDetail);
+
+          const errorMsg = event.detail.message || "";
+          if (errorMsg.includes("getUserMedia")) {
+            showError("無法存取相機，請確認相機權限已開啟");
+          } else if (errorMsg.includes("targets.mind")) {
+            showError("無法載入辨識目標檔案，請確認網路連接");
+          } else {
+            showError("AR 系統發生錯誤：" + errorMsg);
+          }
         });
 
         // 監聽載入完成事件
@@ -268,8 +347,20 @@
 
         sceneEl.addEventListener("camera-error", (event) => {
           console.error("相機初始化失敗:", event);
-          alert("相機初始化失敗，請確認相機權限並重新載入");
+          showError("相機初始化失敗，請確認相機權限並重新載入");
         });
+
+        // 添加更多診斷信息
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+          console.error("全局錯誤:", {
+            message: msg,
+            url: url,
+            line: lineNo,
+            column: columnNo,
+            error: error,
+          });
+          return false;
+        };
       });
     </script>
   </body>

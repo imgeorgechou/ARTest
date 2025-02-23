@@ -6,15 +6,9 @@
       content="width=device-width, initial-scale=1, user-scalable=no"
     />
     <title>AR 追蹤</title>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"></script>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"
-      type="module"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image-aframe.prod.js"
-      type="module"
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image-aframe.prod.js"></script>
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; worker-src * blob:;"
@@ -207,69 +201,74 @@
         }, 5000);
       }
 
-      // 等待所有資源載入完成
       window.addEventListener("load", async () => {
         try {
           const sceneEl = document.querySelector("a-scene");
 
-          // 等待場景初始化
-          await new Promise((resolve) => {
-            if (sceneEl.hasLoaded) {
-              resolve();
-            } else {
-              sceneEl.addEventListener("loaded", resolve);
-            }
-          });
-
-          console.log("場景已載入");
-
-          // 獲取 AR 系統
-          const arSystem = sceneEl.systems["mindar-image-system"];
-          if (!arSystem) {
-            throw new Error("AR 系統未能初始化");
-          }
-
           // 檢查相機權限
           try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const cameras = devices.filter(
+              (device) => device.kind === "videoinput"
+            );
+            console.log("可用相機:", cameras.length);
+
             const stream = await navigator.mediaDevices.getUserMedia({
               video: {
-                facingMode: { exact: "environment" },
+                facingMode: "environment", // 改用較寬鬆的設置
                 width: { ideal: 1280 },
                 height: { ideal: 720 },
               },
             });
 
-            // 成功獲取相機權限後，啟動 AR
+            // 釋放相機
             stream.getTracks().forEach((track) => track.stop());
+
+            // 等待場景載入
+            await new Promise((resolve) => {
+              if (sceneEl.hasLoaded) {
+                resolve();
+              } else {
+                sceneEl.addEventListener("loaded", resolve, { once: true });
+              }
+            });
+
+            console.log("場景已載入");
+
+            // 獲取並啟動 AR 系統
+            const arSystem = sceneEl.systems["mindar-image-system"];
+            if (!arSystem) {
+              throw new Error("AR 系統未能初始化");
+            }
+
+            // 添加更多事件監聽
+            sceneEl.addEventListener("targetFound", (event) => {
+              const targetIndex = event.detail.targetIndex;
+              console.log(`找到目標 ${targetIndex}`);
+            });
+
+            sceneEl.addEventListener("targetLost", (event) => {
+              const targetIndex = event.detail.targetIndex;
+              console.log(`失去目標 ${targetIndex}`);
+            });
+
+            // 啟動 AR
             await arSystem.start();
             console.log("AR 系統啟動成功");
           } catch (err) {
-            console.error("相機權限錯誤:", err);
-            showError("請允許使用相機權限並重新整理頁面");
+            console.error("相機或 AR 初始化錯誤:", err);
+            if (err.name === "NotAllowedError") {
+              showError("請允許使用相機權限");
+            } else if (err.name === "NotFoundError") {
+              showError("找不到相機設備");
+            } else {
+              showError("初始化失敗: " + err.message);
+            }
           }
         } catch (error) {
-          console.error("初始化錯誤:", error);
+          console.error("系統錯誤:", error);
           showError(error.message);
         }
-      });
-
-      // 修改事件監聽
-      document.addEventListener("DOMContentLoaded", () => {
-        const sceneEl = document.querySelector("a-scene");
-
-        sceneEl.addEventListener("arError", (event) => {
-          console.error("AR 錯誤:", event.detail);
-          const msg = event.detail.message || "未知錯誤";
-          showError(`AR 系統錯誤: ${msg}`);
-        });
-
-        sceneEl.addEventListener("targetFound", () => {
-          console.log("找到目標");
-        });
-
-        sceneEl.addEventListener("targetLost", () => {
-          console.log("失去目標");
-        });
       });
     </script>
   </body>

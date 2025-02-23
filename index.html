@@ -143,6 +143,35 @@
           console.error("場景載入錯誤:", event);
         });
       });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const sceneEl = document.querySelector("a-scene");
+        const arSystem = sceneEl.systems["mindar-image-system"];
+
+        // 監聽目標檢測事件
+        sceneEl.addEventListener("targetFound", (event) => {
+          console.log("目標找到了！", event);
+        });
+
+        sceneEl.addEventListener("targetLost", (event) => {
+          console.log("目標丟失了！", event);
+        });
+
+        // 監聽初始化完成事件
+        sceneEl.addEventListener("arReady", (event) => {
+          console.log("AR 系統準備就緒");
+        });
+
+        // 監聽錯誤事件
+        sceneEl.addEventListener("arError", (event) => {
+          console.log("AR 系統發生錯誤:", event);
+        });
+
+        // 監聊載入完成事件
+        arSystem.addEventListener("loaded", (event) => {
+          console.log("Mind AR 已載入完成");
+        });
+      });
     </script>
   </body>
 </html>

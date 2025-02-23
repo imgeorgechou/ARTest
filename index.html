@@ -6,9 +6,25 @@
       content="width=device-width, initial-scale=1, user-scalable=no"
     />
     <title>AR 追蹤</title>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"></script>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image-aframe.prod.js"></script>
+    <script>
+      // 等待 A-Frame 載入完成
+      AFRAME.registerComponent("mind-ar-loader", {
+        init: function () {
+          // 動態載入 MindAR 腳本
+          const mindARScript = document.createElement("script");
+          mindARScript.src =
+            "https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js";
+          mindARScript.onload = () => {
+            const aframeScript = document.createElement("script");
+            aframeScript.src =
+              "https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image-aframe.prod.js";
+            document.head.appendChild(aframeScript);
+          };
+          document.head.appendChild(mindARScript);
+        },
+      });
+    </script>
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; worker-src * blob:;"
@@ -62,6 +78,7 @@
       ></div>
 
       <a-scene
+        mind-ar-loader
         mindar-image="imageTargetSrc: ./targets.mind; 
                           autoStart: false; 
                           uiScanning: true; 
@@ -201,9 +218,22 @@
         }, 5000);
       }
 
+      // 修改初始化邏輯
       window.addEventListener("load", async () => {
         try {
           const sceneEl = document.querySelector("a-scene");
+
+          // 等待 MindAR 完全載入
+          await new Promise((resolve) => {
+            const checkMindAR = () => {
+              if (window.MINDAR && window.MINDAR.IMAGE) {
+                resolve();
+              } else {
+                setTimeout(checkMindAR, 100);
+              }
+            };
+            checkMindAR();
+          });
 
           // 檢查相機權限
           try {
@@ -213,24 +243,12 @@
             );
             console.log("可用相機:", cameras.length);
 
-            // 修改相機設置，使用更靈活的配置
-            let stream;
-            try {
-              // 首先嘗試使用後置相機
-              stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                  facingMode: { ideal: "environment" },
-                  width: { ideal: 1280 },
-                  height: { ideal: 720 },
-                },
-              });
-            } catch (e) {
-              console.log("無法使用後置相機，嘗試其他相機設置");
-              // 如果失敗，使用更基本的設置
-              stream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-              });
-            }
+            // 使用更基本的相機設置
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: "environment",
+              },
+            });
 
             // 釋放相機
             stream.getTracks().forEach((track) => track.stop());
@@ -252,37 +270,12 @@
               throw new Error("AR 系統未能初始化");
             }
 
-            // 添加更多事件監聽
-            sceneEl.addEventListener("targetFound", (event) => {
-              const targetIndex = event.detail.targetIndex;
-              console.log(`找到目標 ${targetIndex}`);
-            });
-
-            sceneEl.addEventListener("targetLost", (event) => {
-              const targetIndex = event.detail.targetIndex;
-              console.log(`失去目標 ${targetIndex}`);
-            });
-
-            // 添加 AR 錯誤監聽
-            sceneEl.addEventListener("arError", (event) => {
-              console.error("AR 錯誤:", event.detail);
-              showError("AR 系統錯誤: " + (event.detail.message || "未知錯誤"));
-            });
-
             // 啟動 AR
             await arSystem.start();
             console.log("AR 系統啟動成功");
           } catch (err) {
             console.error("相機或 AR 初始化錯誤:", err);
-            if (err.name === "NotAllowedError") {
-              showError("請允許使用相機權限");
-            } else if (err.name === "NotFoundError") {
-              showError("找不到相機設備");
-            } else if (err.name === "OverconstrainedError") {
-              showError("相機設置不支援，請重新整理頁面");
-            } else {
-              showError("初始化失敗: " + err.message);
-            }
+            showError("相機初始化失敗: " + err.message);
           }
         } catch (error) {
           console.error("系統錯誤:", error);

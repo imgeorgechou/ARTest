@@ -63,7 +63,10 @@
       ></div>
 
       <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind;"
+        mindar-image="imageTargetSrc: ./targets.mind;
+                    maxTrack: 2;
+                    warmupTolerance: 5;
+                    missTolerance: 5;"
         embedded
         color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights"
@@ -130,18 +133,27 @@
               throw new Error("AR 系統未能初始化");
             }
 
-            // 監聽目標檢測事件
+            // 修改事件監聽，添加更多調試信息
             sceneEl.addEventListener("targetFound", (event) => {
               const targetIndex = event.detail.targetIndex;
               console.log("目標找到:", targetIndex);
 
-              // 記錄檢測性能
-              const perfNow = performance.now();
-              console.log(`檢測時間: ${perfNow}ms`);
+              // 顯示找到目標的提示
+              showMessage(`找到目標 ${targetIndex + 1}`);
             });
 
             sceneEl.addEventListener("targetLost", (event) => {
+              const targetIndex = event.detail.targetIndex;
               console.log("目標遺失:", event.detail.targetIndex);
+
+              // 顯示失去目標的提示
+              showMessage(`失去目標 ${targetIndex + 1}`);
+            });
+
+            // 添加初始化完成事件
+            sceneEl.addEventListener("arReady", () => {
+              console.log("AR 系統準備就緒");
+              showMessage("系統準備就緒，請掃描目標圖片");
             });
 
             // 監聽錯誤
@@ -177,6 +189,28 @@
           showError(error.message || "系統初始化失敗");
         }
       });
+
+      // 添加訊息顯示函數
+      function showMessage(message) {
+        const messageElement = document.createElement("div");
+        messageElement.style.cssText = `
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 10px 20px;
+          border-radius: 5px;
+          z-index: 1000;
+        `;
+        messageElement.textContent = message;
+        document.body.appendChild(messageElement);
+
+        setTimeout(() => {
+          messageElement.remove();
+        }, 3000);
+      }
 
       function showError(message) {
         const errorElement = document.getElementById("error-message");

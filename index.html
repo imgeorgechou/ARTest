@@ -63,10 +63,7 @@
       ></div>
 
       <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind;
-                    maxTrack: 2;
-                    warmupTolerance: 5;
-                    missTolerance: 5;"
+        mindar-image="imageTargetSrc: ./targets.mind;"
         embedded
         color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights"
@@ -75,6 +72,7 @@
       >
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
+        <!-- 第一個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 0">
           <a-plane
             src="./ans1.png"
@@ -85,9 +83,87 @@
           ></a-plane>
         </a-entity>
 
+        <!-- 第二個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 1">
           <a-plane
             src="./ans2.png"
+            position="0 0 0"
+            height="1"
+            width="1"
+            rotation="0 0 0"
+          ></a-plane>
+        </a-entity>
+
+        <!-- 第三個辨識目標 -->
+        <a-entity mindar-image-target="targetIndex: 2">
+          <a-plane
+            src="./ans3.png"
+            position="0 0 0"
+            height="1"
+            width="1"
+            rotation="0 0 0"
+          ></a-plane>
+        </a-entity>
+
+        <!-- 第四個辨識目標 -->
+        <a-entity mindar-image-target="targetIndex: 3">
+          <a-plane
+            src="./ans4.png"
+            position="0 0 0"
+            height="1"
+            width="1"
+            rotation="0 0 0"
+          ></a-plane>
+        </a-entity>
+
+        <!-- 第五個辨識目標 -->
+        <a-entity mindar-image-target="targetIndex: 4">
+          <a-plane
+            src="./ans5.png"
+            position="0 0 0"
+            height="1"
+            width="1"
+            rotation="0 0 0"
+          ></a-plane>
+        </a-entity>
+
+        <!-- 第六個辨識目標 -->
+        <a-entity mindar-image-target="targetIndex: 5">
+          <a-plane
+            src="./ans6.png"
+            position="0 0 0"
+            height="1"
+            width="1"
+            rotation="0 0 0"
+          ></a-plane>
+        </a-entity>
+
+        <!-- 第七個辨識目標 -->
+        <a-entity mindar-image-target="targetIndex: 6">
+          <a-plane
+            src="./ans7.png"
+            position="0 0 0"
+            height="1"
+            width="1"
+            rotation="0 0 0"
+          ></a-plane>
+        </a-entity>
+
+        <!-- 第八個辨識目標 -->
+        <a-entity mindar-image-target="targetIndex: 7">
+          <a-plane
+            src="./ans8.png"
+            position="0 0 0"
+            height="1"
+            width="1"
+            rotation="0 0 0"
+          ></a-plane>
+        </a-entity>
+
+        <!-- 第九個辨識目標 -->
+        <a-entity mindar-image-target="targetIndex: 8">
+          <a-plane
+            src="./ans9.png"
             position="0 0 0"
             height="1"
             width="1"

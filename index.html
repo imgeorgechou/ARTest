@@ -42,6 +42,20 @@
       .show-error {
         display: block !important;
       }
+
+      /* 添加 footer 樣式 */
+      .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        text-align: center;
+        padding: 15px 0;
+        font-size: 16px;
+        z-index: 1000;
+      }
     </style>
   </head>
   <body>
@@ -204,6 +218,9 @@
           ></a-plane>
         </a-entity>
       </a-scene>
+
+      <!-- 添加 footer -->
+      <div class="footer">掃描完畢後，請點擊上一頁回到遊戲</div>
     </div>
 
     <script>

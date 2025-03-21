@@ -94,128 +94,110 @@
 
         <!-- 第一個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 0">
-          <a-plane
-            src="./ans1.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target0-content">
+            <a-image
+              src="./ans1.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
 
         <!-- 第二個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 1">
-          <a-plane
-            src="./ans2.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target1-content">
+            <a-image
+              src="./ans2.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
 
         <!-- 第三個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 2">
-          <a-plane
-            src="./ans5.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target2-content">
+            <a-image
+              src="./ans5.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
 
         <!-- 第四個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 3">
-          <a-plane
-            src="./ans6.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target3-content">
+            <a-image
+              src="./ans6.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
 
         <!-- 第五個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 4">
-          <a-plane
-            src="./ans7.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target4-content">
+            <a-image
+              src="./ans7.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
 
         <!-- 第六個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 5">
-          <a-plane
-            src="./ans8.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target5-content">
+            <a-image
+              src="./ans8.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
 
         <!-- 第七個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 6">
-          <a-plane
-            src="./ans9.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target6-content">
+            <a-image
+              src="./ans9.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
 
         <!-- 第八個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 7">
-          <a-plane
-            src="./ans10.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target7-content">
+            <a-image
+              src="./ans10.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
 
         <!-- 第九個辨識目標 -->
         <a-entity mindar-image-target="targetIndex: 8">
-          <a-plane
-            src="./ans11.png"
-            position="0 0 0"
-            height="1"
-            width="1"
-            rotation="0 0 0"
-            transparent="true"
-            alphaTest="0.5"
-            material="opacity: 1; transparent: true"
-          ></a-plane>
+          <a-entity id="target8-content">
+            <a-image
+              src="./ans11.png"
+              position="0 0 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+          </a-entity>
         </a-entity>
       </a-scene>
 
@@ -229,6 +211,45 @@
       stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
       document.body.appendChild(stats.dom);
 
+      // 預加載所有圖片並調整尺寸
+      const imagePaths = [
+        "./ans1.png",
+        "./ans2.png",
+        "./ans5.png",
+        "./ans6.png",
+        "./ans7.png",
+        "./ans8.png",
+        "./ans9.png",
+        "./ans10.png",
+        "./ans11.png",
+      ];
+
+      // 預加載圖片並獲取原始比例
+      function preloadImages() {
+        return Promise.all(
+          imagePaths.map((path, index) => {
+            return new Promise((resolve) => {
+              const img = new Image();
+              img.onload = function () {
+                // 計算寬高比
+                const aspectRatio = this.width / this.height;
+                resolve({
+                  index,
+                  aspectRatio,
+                  width: this.width,
+                  height: this.height,
+                });
+              };
+              img.onerror = function () {
+                console.error(`無法加載圖片: ${path}`);
+                resolve({ index, aspectRatio: 1, width: 512, height: 512 }); // 默認值
+              };
+              img.src = path;
+            });
+          })
+        );
+      }
+
       window.addEventListener("load", async () => {
         // 顯示初始提示
         const initialMessage = document.getElementById("initial-message");
@@ -240,6 +261,9 @@
         }, 5000);
 
         try {
+          // 預加載圖片並獲取比例
+          const imageData = await preloadImages();
+
           const sceneEl = document.querySelector("a-scene");
 
           // 等待場景載入
@@ -248,6 +272,19 @@
               resolve();
             } else {
               sceneEl.addEventListener("loaded", resolve, { once: true });
+            }
+          });
+
+          // 應用原始圖片比例
+          imageData.forEach(({ index, aspectRatio, width, height }) => {
+            const imageEl = document.querySelector(
+              `#target${index}-content a-image`
+            );
+            if (imageEl) {
+              // 保持原始比例
+              imageEl.setAttribute("width", aspectRatio);
+              imageEl.setAttribute("height", 1);
+              console.log(`調整圖片 ${index} 比例: ${aspectRatio}`);
             }
           });
 
